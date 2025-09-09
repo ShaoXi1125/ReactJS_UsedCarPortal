@@ -19,14 +19,26 @@ export default function ConfirmPassword() {
                 {({ processing, errors }) => (
                     <div className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
-                            <Input id="password" type="password" name="password" placeholder="Password" autoComplete="current-password" autoFocus />
-
+                            <Label htmlFor="password" className="text-gray-800">
+                                Password
+                            </Label>
+                            <Input
+                                id="password"
+                                type="password"
+                                name="password"
+                                placeholder="Password"
+                                autoComplete="current-password"
+                                autoFocus
+                                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                            />
                             <InputError message={errors.password} />
                         </div>
 
                         <div className="flex items-center">
-                            <Button className="w-full" disabled={processing}>
+                            <Button
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                                disabled={processing}
+                            >
                                 {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                                 Confirm password
                             </Button>
