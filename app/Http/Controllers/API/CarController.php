@@ -19,26 +19,28 @@ class CarController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'variant_id'   => 'required|exists:variants,id',
+            'make_id'     => 'required|exists:makes,id',
+            'model_id'    => 'required|exists:models,id',
+            'variant_id'  => 'required|exists:variants,id',
+            'color'       => 'nullable|string|max:50',
             'year'        => 'required|integer|min:1900|max:' . date('Y'),
             'mileage'     => 'required|integer|min:0',
             'price'       => 'required|numeric|min:0',
             'description' => 'nullable|string',
-            'images.*'    => 'nullable|image|max:2048', // multiple images, each max 2MB
+            'images.*'    => 'nullable|image|max:2048',
         ]);
-
-        $validated['user_id'] = Auth::id(); // Car belongs to the authenticated user
-
+    
+        $validated['user_id'] = Auth::id();
+    
         $car = Car::create($validated);
-
-        //Upload image to Public, save to  CarImage folder
+    
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
                 $path = $image->store('cars', 'public');
                 $car->images()->create(['image_path' => $path]);
             }
         }
-
+    
         return response()->json([
             'message' => 'Car created successfully.',
             'car' => $car->load(['variant.model.make', 'images'])
@@ -58,25 +60,29 @@ class CarController extends Controller
         return response()->json($car);
     }
 
+
     public function update(Request $request, Car $car)
     {
-        // only the owner can update the car
+
         if ($car->user_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $validated = $request->validate([
-            'variant_id'   => 'required|exists:variants,id',
-            'year'        => 'required|integer|min:1900|max:' . date('Y'),
-            'mileage'     => 'required|integer|min:0',
-            'price'       => 'required|numeric|min:0',
+            'make_id'     => 'sometimes|exists:makes,id',
+            'model_id'    => 'sometimes|exists:models,id',
+            'variant_id'  => 'sometimes|exists:variants,id',
+            'color'       => 'nullable|string|max:50',
+            'year'        => 'sometimes|integer|min:1900|max:' . date('Y'),
+            'mileage'     => 'sometimes|integer|min:0',
+            'price'       => 'sometimes|numeric|min:0',
             'description' => 'nullable|string',
             'images.*'    => 'nullable|image|max:2048',
         ]);
 
         $car->update($validated);
 
-        // if new images are uploaded, handle them
+        // 如果有新图片，上传并保存
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
                 $path = $image->store('cars', 'public');
@@ -90,18 +96,14 @@ class CarController extends Controller
         ]);
     }
 
-    /**
-     * Delete car.
-     */
     public function destroy(Car $car)
     {
         if ($car->user_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Delete associated images from storage and database
         foreach ($car->images as $image) {
-            \Storage::disk('public')->delete($image->image_path);
+            Storage::disk('public')->delete($image->image_path);
             $image->delete();
         }
 
@@ -109,6 +111,5 @@ class CarController extends Controller
 
         return response()->json(['message' => 'Car deleted successfully.']);
     }
-
 
 }
