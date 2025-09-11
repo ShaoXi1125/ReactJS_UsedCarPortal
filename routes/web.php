@@ -12,7 +12,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('welcome');
     })->name('dashboard');
+
+    Route::get('/account/settings', function () {
+        return Inertia::render('Account/Settings');
+    });
 });
+
+
 
 Route::get('/cars', [CarController::class, 'index'])->name('cars.index');
 

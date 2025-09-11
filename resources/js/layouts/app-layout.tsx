@@ -1,14 +1,20 @@
-import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
-import { type BreadcrumbItem } from '@/types';
-import { type ReactNode } from 'react';
+// resources/js/layouts/AppLayout.tsx
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import { PropsWithChildren } from "react";
 
-interface AppLayoutProps {
-    children: ReactNode;
-    breadcrumbs?: BreadcrumbItem[];
+export default function AppLayout({ children }: PropsWithChildren) {
+    return (
+        <div className="flex min-h-screen bg-white text-gray-900 flex-col">
+            
+            <Header />
+
+            <main className="flex-1">
+                {children}
+            </main>
+
+         
+            <Footer />
+        </div>
+    );
 }
-
-export default ({ children, breadcrumbs, ...props }: AppLayoutProps) => (
-    <AppLayoutTemplate breadcrumbs={breadcrumbs} {...props}>
-        {children}
-    </AppLayoutTemplate>
-);
