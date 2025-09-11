@@ -3,9 +3,13 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { type SharedData } from '@/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import CarSlider, { Car } from '@/components/CarSlider';
+
+
 
 export default function Welcome() {
-    const { auth } = usePage<SharedData>().props;
+    const maybeCars = usePage<SharedData>().props.cars as Car[] | undefined;
+    const cars: Car[] = maybeCars ?? [];// Ensure cars is always an array
 
     return (
         <>
@@ -37,6 +41,14 @@ export default function Welcome() {
                         Browse Cars
                     </Link>
                 </main>
+
+                {/* car slider */}
+                <section className="w-full max-w-6xl mx-auto my-8 px-4">
+                    <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+                        Featured Cars
+                    </h2>
+                    <CarSlider cars={cars} />
+                </section>
 
                 {/* footer */}
                 <Footer />

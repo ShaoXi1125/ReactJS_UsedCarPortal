@@ -69,8 +69,8 @@ export default function CarPage() {
   return (
     <div className="flex flex-col min-h-screen bg-white">
         <Header />
-            <main className="flex-grow p-6">
-                <h1 className="text-2xl font-bold mb-4">Available Cars</h1>
+            <main className="flex-grow p-6 text-gray-900">
+                <h1 className="text-2xl  font-bold mb-4">Available Cars</h1>
                 {cars.length === 0 ? (
                 <p>No cars found.</p>
                 ) : (
