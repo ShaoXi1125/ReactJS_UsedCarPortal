@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Header  from "@/components/Header";
 import Footer from "@/components/Footer";
+import CarSelector from "@/components/CarSelector";
 
 interface Make {
   id: number;
@@ -69,6 +70,9 @@ export default function CarPage() {
   return (
     <div className="flex flex-col min-h-screen bg-white">
         <Header />
+            <div className="mb-6">
+              <CarSelector />
+            </div>
             <main className="flex-grow p-6 text-gray-900">
                 <h1 className="text-2xl  font-bold mb-4">Available Cars</h1>
                 {cars.length === 0 ? (
