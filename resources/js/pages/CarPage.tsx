@@ -71,7 +71,12 @@ export default function CarPage() {
     <div className="flex flex-col min-h-screen bg-white">
         <Header />
             <div className="mb-6">
-              <CarSelector />
+              <CarSelector
+                onSelectMake={() => {}}
+                onSelectModel={() => {}}
+                onSelectYear={() => {}}
+                onSelectVariant={() => {}}
+              />
             </div>
             <main className="flex-grow p-6 text-gray-900">
                 <h1 className="text-2xl  font-bold mb-4">Available Cars</h1>

@@ -16,6 +16,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/account/settings', function () {
         return Inertia::render('Account/Settings');
     });
+
+    Route::get('/sell-car', [CarController::class, 'create'])->name('cars.create');
 });
 
 

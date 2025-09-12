@@ -9,7 +9,19 @@ interface Option {
   submodel_id?: number;
 }
 
-export default function CarSelector() {
+interface CarSelectorProps {
+  onSelectMake: (make: Option | null) => void;
+  onSelectModel: (model: Option | null) => void;
+  onSelectYear: (year: string) => void;
+  onSelectVariant: (variant: Option | null) => void;
+}
+
+export default function CarSelector({
+  onSelectMake,
+  onSelectModel,
+  onSelectYear,
+  onSelectVariant,
+}: CarSelectorProps) {
   const [makes, setMakes] = useState<Option[]>([]);
   const [models, setModels] = useState<Option[]>([]);
   const [years, setYears] = useState<Option[]>([]);
@@ -22,7 +34,7 @@ export default function CarSelector() {
 
   const currentYear = new Date().getFullYear();
 
-  // 初始化年份列表，例如 2000 ~ 当前年份
+  // 初始化年份列表
   useEffect(() => {
     const yearList: Option[] = [];
     for (let y = currentYear; y >= 2000; y--) {
@@ -63,31 +75,29 @@ export default function CarSelector() {
         setSelectedVariant("");
       });
   }, [selectedMake]);
-  
-    // 获取 Years
 
-    useEffect(() => {
-        if (!selectedModel) {
-          setYears([]);
-          setSelectedYear("");
-          return;
+  // 获取 Years
+  useEffect(() => {
+    if (!selectedModel) {
+      setYears([]);
+      setSelectedYear("");
+      return;
+    }
+
+    fetch(
+      `https://crazy-rabbit-api.carro.sg/api/v1/rabbit/my/config/options?types[0][name]=manufacture_years&types[0][filter]=${selectedModel}&types[0][filter2]=model`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        const list = data?.data?.manufacture_years;
+        if (Array.isArray(list)) {
+          setYears(list.map((y: number) => ({ value: y, title: y.toString() })));
         }
-      
-        fetch(
-          `https://crazy-rabbit-api.carro.sg/api/v1/rabbit/my/config/options?types[0][name]=manufacture_years&types[0][filter]=${selectedModel}&types[0][filter2]=model`
-        )
-          .then((res) => res.json())
-          .then((data) => {
-            const list = data?.data?.manufacture_years;
-            if (Array.isArray(list)) {
-              // 转成 { value, title } 结构方便 Select 使用
-              setYears(list.map((y: number) => ({ value: y, title: y.toString() })));
-            }
-            setSelectedYear("");
-            setVariants([]);
-            setSelectedVariant("");
-          });
-      }, [selectedModel]);
+        setSelectedYear("");
+        setVariants([]);
+        setSelectedVariant("");
+      });
+  }, [selectedModel]);
 
   // 获取 Variants
   useEffect(() => {
@@ -110,87 +120,108 @@ export default function CarSelector() {
 
   return (
     <div className="max-w-5xl mx-auto p-4">
-    <div className="flex flex-col gap-4 md:flex-row md:gap-4">
-      {/* Make */}
-      <div className="flex-1">
-        <select
-          value={selectedMake}
-          onChange={(e) => setSelectedMake(e.target.value)}
-          className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 bg-white text-gray-900 transition"
-        >
-          <option value="">Brand</option>
-          {makes.map((make) => (
-            <option key={make.value} value={make.title}>
-              {make.title}
-            </option>
-          ))}
-        </select>
-      </div>
-  
-      {/* Model */}
+      <div className="flex flex-col gap-4 md:flex-row md:gap-4">
+        {/* Make */}
         <div className="flex-1">
-            <select
+          <select
+            value={selectedMake}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSelectedMake(value);
+              onSelectMake(
+                value ? { value: Number(value), title: "" } : null
+              );
+            }}
+            className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 bg-white text-gray-900 transition"
+          >
+            <option value="">Brand</option>
+            {makes.map((make) => (
+              <option key={make.value} value={make.value}>
+                {make.title}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Model */}
+        <div className="flex-1">
+          <select
             value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSelectedModel(value);
+              onSelectModel(
+                value ? { value: Number(value), title: "" } : null
+              );
+            }}
             disabled={!models.length}
             className={`w-full p-3 border rounded-lg shadow-sm bg-white text-gray-900 transition ${
-                models.length
+              models.length
                 ? "border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
                 : "border-gray-200 bg-gray-100 cursor-not-allowed"
             }`}
-            >
+          >
             <option value="">Model</option>
             {models.map((model) => (
-                <option key={model.value} value={model.title}>
+              <option key={model.value} value={model.value}>
                 {model.title}
-                </option>
+              </option>
             ))}
-            </select>
+          </select>
         </div>
-    
+
         {/* Year */}
         <div className="flex-1">
-            <select
+          <select
             value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSelectedYear(value);
+              onSelectYear(value);
+            }}
             disabled={!selectedModel}
             className={`w-full p-3 border rounded-lg shadow-sm bg-white text-gray-900 transition ${
-                selectedModel
+              selectedModel
                 ? "border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
                 : "border-gray-200 bg-gray-100 cursor-not-allowed"
             }`}
-            >
+          >
             <option value="">Year</option>
             {years.map((year) => (
-                <option key={year.value} value={year.title}>
+              <option key={year.value} value={year.value}>
                 {year.title}
-                </option>
+              </option>
             ))}
-            </select>
+          </select>
         </div>
-    
+
         {/* Variant */}
         <div className="flex-1">
-            <select
+          <select
             value={selectedVariant}
-            onChange={(e) => setSelectedVariant(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSelectedVariant(value);
+              onSelectVariant(
+                value ? { value: Number(value), title: "" } : null
+              );
+            }}
             disabled={!variants.length}
             className={`w-full p-3 border rounded-lg shadow-sm bg-white text-gray-900 transition ${
-                variants.length
+              variants.length
                 ? "border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
                 : "border-gray-200 bg-gray-100 cursor-not-allowed"
             }`}
-            >
+          >
             <option value="">Variant</option>
             {variants.map((v) => (
-                <option key={v.value} value={v.title}>
+              <option key={v.value} value={v.value}>
                 {v.title}
-                </option>
+              </option>
             ))}
-            </select>
+          </select>
         </div>
-        </div>
+      </div>
     </div>
-  
   );
 }

@@ -52,7 +52,7 @@ export default function Header() {
 
                     {auth.user ? (
                         <Link
-                            href="/cars/sell"
+                            href="/sell-car"
                             className={`flex-1 border-b-2 px-1 py-2 text-base font-medium whitespace-nowrap hover:border-indigo-400 hover:text-indigo-400 ${isActive("/cars/sell")}`}
                         >
                             Sell Car

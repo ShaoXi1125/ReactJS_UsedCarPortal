@@ -15,4 +15,8 @@ class CarController extends Controller
             'cars' => $cars,
         ]);
     }
+
+    public function create(){
+        return Inertia::render('SellCarPage');
+    }
 }
