@@ -44,10 +44,7 @@ export default function Welcome() {
 
                 {/* car slider */}
                 <section className="w-full max-w-6xl mx-auto my-8 px-4">
-                    <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-                        Featured Cars
-                    </h2>
-                    <CarSlider cars={cars} />
+                    <CarSlider />
                 </section>
 
                 {/* footer */}

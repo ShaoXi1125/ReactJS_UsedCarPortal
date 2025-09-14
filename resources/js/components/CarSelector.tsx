@@ -128,9 +128,10 @@ export default function CarSelector({
             onChange={(e) => {
               const value = e.target.value;
               setSelectedMake(value);
-              onSelectMake(
-                value ? { value: Number(value), title: "" } : null
-              );
+              
+              // 找到选中的make对象，传递完整信息
+              const selectedMakeObj = makes.find(make => make.value.toString() === value);
+              onSelectMake(selectedMakeObj || null);
             }}
             className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 bg-white text-gray-900 transition"
           >
@@ -150,9 +151,10 @@ export default function CarSelector({
             onChange={(e) => {
               const value = e.target.value;
               setSelectedModel(value);
-              onSelectModel(
-                value ? { value: Number(value), title: "" } : null
-              );
+              
+              // 找到选中的model对象，传递完整信息
+              const selectedModelObj = models.find(model => model.value.toString() === value);
+              onSelectModel(selectedModelObj || null);
             }}
             disabled={!models.length}
             className={`w-full p-3 border rounded-lg shadow-sm bg-white text-gray-900 transition ${
@@ -202,9 +204,10 @@ export default function CarSelector({
             onChange={(e) => {
               const value = e.target.value;
               setSelectedVariant(value);
-              onSelectVariant(
-                value ? { value: Number(value), title: "" } : null
-              );
+              
+              // 找到选中的variant对象，传递完整信息
+              const selectedVariantObj = variants.find(variant => variant.value.toString() === value);
+              onSelectVariant(selectedVariantObj || null);
             }}
             disabled={!variants.length}
             className={`w-full p-3 border rounded-lg shadow-sm bg-white text-gray-900 transition ${

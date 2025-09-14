@@ -19,4 +19,22 @@ class CarController extends Controller
     public function create(){
         return Inertia::render('SellCarPage');
     }
+
+    public function myCar(){
+        return Inertia::render('myCarPage');
+    }
+
+    public function CarDetail(){
+        return Inertia::render("CarDetailPage");
+    }
+
+   
+    public function EditMyCar($carId)
+    {
+        $car = Car::with('variant.model.make', 'images')->findOrFail($carId);
+
+        return Inertia::render('EditCarPage', [
+            'car' => $car
+        ]);
+    }
 }

@@ -14,9 +14,12 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::get('/cars', [CarController::class, 'index']);
+Route::get('/cars/random', [CarController::class, 'random']);
 Route::get('/cars/{car}', [CarController::class, 'show']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/cars', [CarController::class, 'store']);
+    Route::get('/cars', [CarController::class, 'myCars']);
     Route::put('/cars/{car}', [CarController::class, 'update']);
     Route::delete('/cars/{car}', [CarController::class, 'destroy']);
 });

@@ -18,11 +18,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::get('/sell-car', [CarController::class, 'create'])->name('cars.create');
+
+    Route::get('/my-cars', [CarController::class, 'myCar'])->name('myCar');
+    Route::get('/cars/{carId}/edit', [CarController::class, 'EditMyCar'])->name('EditCar');
 });
 
 
 
 Route::get('/cars', [CarController::class, 'index'])->name('cars.index');
+Route::get('/CarDetail',[CarController::class,'CarDetail'])->name('cars.detail');
 
 
 require __DIR__.'/settings.php';

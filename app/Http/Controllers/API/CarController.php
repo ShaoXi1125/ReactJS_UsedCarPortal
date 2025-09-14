@@ -5,146 +5,231 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log; // Import Log facade
-use Illuminate\Support\Facades\Storage; // added Storage facade
-use Illuminate\Validation\ValidationException; // Import ValidationException
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use App\Models\Car;
 use App\Models\Make;
 use App\Models\CarModel;
 use App\Models\Variant;
 use App\Models\CarImage;
 
-
 class CarController extends Controller
 {
-    //
-    public function index(){
-        $cars = Car::with(['make', 'model', 'variant', 'images'])->get();
+    public function index(Request $request)
+    {
+        $query = Car::with(['variant.model.make', 'images']);
+
+        // 全局 searchText 搜索
+        if ($request->searchText) {
+            $query->where(function($q) use ($request) {
+                $q->whereHas('variant.model.make', fn($q) => 
+                    $q->where('name', 'like', '%'.$request->searchText.'%')
+                )
+                ->orWhereHas('variant.model', fn($q) => 
+                    $q->where('name', 'like', '%'.$request->searchText.'%')
+                )
+                ->orWhere('year', 'like', '%'.$request->searchText.'%');
+            });
+        }
+
+        // 品牌
+        if ($request->make) {
+            $query->whereHas('variant.model.make', function($q) use ($request) {
+                $q->where('id', $request->make)
+                ->orWhere('name', 'like', '%'.$request->make.'%');
+            });
+        }
+
+        // 型号
+        if ($request->model) {
+            $query->whereHas('variant.model', function($q) use ($request) {
+                $q->where('id', $request->model)
+                ->orWhere('name', 'like', '%'.$request->model.'%');
+            });
+        }
+
+        // 年份（转 int）
+        if ($request->year) {
+            $query->where('year', intval($request->year));
+        }
+
+        // 价格区间（转 int）
+        if ($request->minPrice && $request->maxPrice) {
+            $query->whereBetween('price', [
+                intval($request->minPrice),
+                intval($request->maxPrice)
+            ]);
+        }
+
+        return response()->json($query->get());
+    }
+
+    public function random(){
+        $cars = Car::with(['make', 'model', 'variant', 'images'])
+        ->inRandomOrder()
+        ->take(8)    
+        ->get();
+
+        return response()->json($cars);
+
+    }
+
+    public function myCars(Request $request)
+    {
+        $user = $request->user(); 
+
+        $query = Car::with(['variant.model.make', 'images'])
+            ->where('user_id', $user->id);
+
+        $cars = $query->get();
+
         return response()->json($cars);
     }
 
     public function store(Request $request)
     {
+        // 设置正确的响应头
         $request->headers->set('Accept', 'application/json');
-
+        
         try {
-            Log::info('Store request headers:', $request->headers->all());
-            Log::info('Store request data:', $request->all());
-            Log::info('Files:', $request->file('images') ? $request->file('images') : 'No files');
-
+            // 检查认证
             if (!Auth::check()) {
                 return response()->json(['message' => 'Unauthenticated'], 401);
             }
 
-            // Validate input, including title fields
+            // 验证输入
             $validated = $request->validate([
-                // accept either IDs (preferred) or titles
-                'make_id'        => 'required_without:make_title|exists:makes,id',
-                'make_title'     => 'required_without:make_id|string|max:255',
-                'model_id'       => 'required_without:model_title|exists:models,id',
-                'model_title'    => 'required_without:model_id|string|max:255',
-                'variant_id'     => 'required_without:variant_title|exists:variants,id',
-                'variant_title'  => 'required_without:variant_id|string|max:255',
-                'color'          => 'nullable|string|max:50',
-                'year'           => 'required|integer|min:1900|max:' . date('Y'),
-                'mileage'        => 'required|integer|min:0',
-                'price'          => 'required|numeric|min:0',
-                'description'    => 'nullable|string',
-                'images.*'       => 'nullable|image|max:2048',
+                'make_id'       => 'nullable|string',
+                'make_title'    => 'nullable|string|max:255',
+                'model_id'      => 'nullable|string',
+                'model_title'   => 'nullable|string|max:255',
+                'variant_id'    => 'nullable|string',
+                'variant_title' => 'nullable|string|max:255',
+                'color'         => 'nullable|string|max:50',
+                'year'          => 'required|string',
+                'mileage'       => 'required|string',
+                'price'         => 'required|string',
+                'description'   => 'nullable|string',
+                'images.*'      => 'nullable|image|max:2048',
             ]);
 
-            // Handle Make - support either id or title
+            // 处理 Make
             $make = null;
             if (!empty($validated['make_id'])) {
-                $make = Make::find($validated['make_id']);
+                $make = Make::find((int)$validated['make_id']);
             }
             if (!$make && !empty($validated['make_title'])) {
-                $make = Make::where('name', $validated['make_title'])->first();
-                if (!$make) {
-                    $make = Make::create(['name' => $validated['make_title']]);
-                }
+                $make = Make::firstOrCreate(['name' => $validated['make_title']]);
             }
             if (!$make) {
-                throw ValidationException::withMessages(['make' => ['Invalid make specified']]);
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => ['make' => ['Make is required or make_id not found']]
+                ], 422);
             }
 
-            // Handle Model (ensure it belongs to the make) - support id or title
+            // 处理 Model
             $model = null;
             if (!empty($validated['model_id'])) {
-                $model = CarModel::find($validated['model_id']);
+                $model = CarModel::find((int)$validated['model_id']);
             }
             if (!$model && !empty($validated['model_title'])) {
-                $model = CarModel::where('make_id', $make->id)
-                                 ->where('name', $validated['model_title'])
-                                 ->first();
-                if (!$model) {
-                    $model = CarModel::create([
-                        'make_id' => $make->id,
-                        'name' => $validated['model_title']
-                    ]);
-                }
+                $model = CarModel::firstOrCreate([
+                    'make_id' => $make->id, 
+                    'name' => $validated['model_title']
+                ]);
             }
             if (!$model) {
-                throw ValidationException::withMessages(['model' => ['Invalid model specified']]);
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => ['model' => ['Model is required or model_id not found']]
+                ], 422);
             }
-            $validated['model_id'] = $model->id;
 
-            // Handle Variant (ensure it belongs to the model) - support id or title
+            // 处理 Variant
             $variant = null;
             if (!empty($validated['variant_id'])) {
-                $variant = Variant::find($validated['variant_id']);
+                $variant = Variant::find((int)$validated['variant_id']);
             }
             if (!$variant && !empty($validated['variant_title'])) {
-                $variant = Variant::where('model_id', $model->id)
-                                  ->where('name', $validated['variant_title'])
-                                  ->first();
-                if (!$variant) {
-                    $variant = Variant::create([
-                        'model_id' => $model->id,
-                        'name' => $validated['variant_title']
-                    ]);
-                }
+                $variant = Variant::firstOrCreate([
+                    'model_id' => $model->id, 
+                    'name' => $validated['variant_title']
+                ]);
             }
             if (!$variant) {
-                throw ValidationException::withMessages(['variant' => ['Invalid variant specified']]);
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => ['variant' => ['Variant is required or variant_id not found']]
+                ], 422);
             }
-            $validated['variant_id'] = $variant->id;
 
-            // Create Car
-            $validated['user_id'] = Auth::id();
+            // 验证年份、里程和价格范围
+            $year = (int)$validated['year'];
+            $mileage = (int)$validated['mileage'];
+            $price = (float)$validated['price'];
+
+            if ($year < 1900 || $year > (date('Y') + 1)) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => ['year' => ['Year must be between 1900 and ' . (date('Y') + 1)]]
+                ], 422);
+            }
+
+            if ($mileage < 0) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => ['mileage' => ['Mileage cannot be negative']]
+                ], 422);
+            }
+
+            if ($price <= 0) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => ['price' => ['Price must be greater than 0']]
+                ], 422);
+            }
+
+            // 创建汽车记录
             $car = Car::create([
-                'user_id' => $validated['user_id'],
+                'user_id' => Auth::id(),
                 'make_id' => $make->id,
                 'model_id' => $model->id,
                 'variant_id' => $variant->id,
-                'color' => $validated['color'],
-                'year' => $validated['year'],
-                'mileage' => $validated['mileage'],
-                'price' => $validated['price'],
-                'description' => $validated['description'],
+                'color' => $validated['color'] ?? null,
+                'year' => $year,
+                'mileage' => $mileage,
+                'price' => $price,
+                'description' => $validated['description'] ?? null,
             ]);
 
-            // Handle Images
+            // 处理图片上传
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
-                    $path = $image->store('cars', 'public');
-                    $car->images()->create(['image_path' => $path]);
+                    if ($image->isValid()) {
+                        $path = $image->store('cars', 'public');
+                        $car->images()->create(['image_path' => $path]);
+                    }
                 }
             }
 
+            // 返回成功响应
             return response()->json([
                 'message' => 'Car created successfully.',
-                'car' => $car->load(['variant.model.make', 'images'])
+                'car' => $car->load(['make', 'model', 'variant', 'images'])
             ], 201);
+
         } catch (ValidationException $e) {
-            Log::error('Validation error in CarController::store: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Error in CarController::store: ' . $e->getMessage());
-            return response()->json(['message' => 'Server error: ' . $e->getMessage()], 500);
+            return response()->json([
+                'message' => 'Server error occurred',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
         }
     }
 
@@ -152,50 +237,115 @@ class CarController extends Controller
     {
         $car->load([
             'user:id,name',
-            'variant:id,name,model_id',
-            'variant.model:id,name,make_id',
-            'variant.model.make:id,name',
+            'make:id,name',
+            'model:id,name',
+            'variant:id,name',
             'images:id,car_id,image_path'
         ]);
 
         return response()->json($car);
     }
 
-
-    public function update(Request $request, Car $car)
+     public function update(Request $request, Car $car)
     {
-
         if ($car->user_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $validated = $request->validate([
-            'make_id'     => 'sometimes|exists:makes,id',
-            'model_id'    => 'sometimes|exists:models,id',
-            'variant_id'  => 'sometimes|exists:variants,id',
-            'color'       => 'nullable|string|max:50',
-            'year'        => 'sometimes|integer|min:1900|max:' . date('Y'),
-            'mileage'     => 'sometimes|integer|min:0',
-            'price'       => 'sometimes|numeric|min:0',
-            'description' => 'nullable|string',
-            'images.*'    => 'nullable|image|max:2048',
+            'make_id'        => 'nullable|integer',
+            'make_title'     => 'nullable|string|max:255',
+            'model_id'       => 'nullable|integer',
+            'model_title'    => 'nullable|string|max:255',
+            'variant_id'     => 'nullable|integer',
+            'variant_title'  => 'nullable|string|max:255',
+            'color'          => 'nullable|string|max:50',
+            'year'           => 'sometimes|integer|min:1900|max:' . (date('Y') + 1),
+            'mileage'        => 'sometimes|integer|min:0',
+            'price'          => 'sometimes|numeric|min:0',
+            'description'    => 'nullable|string',
+            'images.*'       => 'nullable|image|max:2048',
         ]);
 
-        $car->update($validated);
+        // 🔹 处理 Make
+        $make = null;
+        if (!empty($validated['make_id'])) {
+            $make = Make::find((int)$validated['make_id']);
+        }
+        if (!$make && !empty($validated['make_title'])) {
+            $make = Make::firstOrCreate(['name' => $validated['make_title']]);
+        }
+        if (!$make) {
+            return response()->json(['errors' => ['make' => ['Make is required']]], 422);
+        }
 
-        // 如果有新图片，上传并保存
+        // 🔹 处理 Model
+        $model = null;
+        if (!empty($validated['model_id'])) {
+            $model = CarModel::find((int)$validated['model_id']);
+        }
+        if (!$model && !empty($validated['model_title'])) {
+            $model = CarModel::firstOrCreate([
+                'make_id' => $make->id,
+                'name' => $validated['model_title'],
+            ]);
+        }
+        if (!$model) {
+            return response()->json(['errors' => ['model' => ['Model is required']]], 422);
+        }
+
+        // 🔹 处理 Variant
+        $variant = null;
+        if (!empty($validated['variant_id'])) {
+            $variant = Variant::find((int)$validated['variant_id']);
+        }
+        if (!$variant && !empty($validated['variant_title'])) {
+            $variant = Variant::firstOrCreate([
+                'model_id' => $model->id,
+                'name' => $validated['variant_title'],
+            ]);
+        }
+        if (!$variant) {
+            return response()->json(['errors' => ['variant' => ['Variant is required']]], 422);
+        }
+
+        // 🔹 更新 Car
+        $car->update([
+            'make_id'     => $make->id,
+            'model_id'    => $model->id,
+            'variant_id'  => $variant->id,
+            'color'       => $validated['color'] ?? $car->color,
+            'year'        => $validated['year'] ?? $car->year,
+            'mileage'     => $validated['mileage'] ?? $car->mileage,
+            'price'       => $validated['price'] ?? $car->price,
+            'description' => $validated['description'] ?? $car->description,
+        ]);
+
+        // 🔹 删除旧图
+        $existing = $request->input('existing_images', []);
+        $car->images()->whereNotIn('id', $existing)->get()->each(function ($img) {
+            \Storage::disk('public')->delete($img->image_path);
+            $img->delete();
+        });
+
+        // 🔹 新图
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                $path = $image->store('cars', 'public');
-                $car->images()->create(['image_path' => $path]);
+                if ($image->isValid()) {
+                    $path = $image->store('cars', 'public');
+                    $car->images()->create(['image_path' => $path]);
+                }
             }
         }
 
         return response()->json([
             'message' => 'Car updated successfully.',
-            'car' => $car->load(['variant.model.make', 'images'])
+            'car' => $car->load(['make', 'model', 'variant', 'images'])
         ]);
     }
+
+
+
 
     public function destroy(Car $car)
     {
@@ -203,6 +353,7 @@ class CarController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        // 删除图片文件和记录
         foreach ($car->images as $image) {
             Storage::disk('public')->delete($image->image_path);
             $image->delete();
@@ -212,5 +363,4 @@ class CarController extends Controller
 
         return response()->json(['message' => 'Car deleted successfully.']);
     }
-
 }

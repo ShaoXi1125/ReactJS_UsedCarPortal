@@ -33,6 +33,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $user = Auth::user();
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        // Store token in session to pass to frontend
+        $request->session()->flash('token', $token);
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
@@ -41,6 +47,11 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+        if ($user) {
+            $user->tokens()->delete(); // Revoke all tokens
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

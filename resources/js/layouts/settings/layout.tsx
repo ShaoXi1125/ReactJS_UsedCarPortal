@@ -48,12 +48,12 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 size="sm"
                                 variant="ghost"
                                 asChild
-                                className={cn('w-full justify-start', {
-                                    'bg-muted': currentPath === (typeof item.href === 'string' ? item.href : item.href.url),
+                                className={cn('w-full justify-start text-gray-900 hover:text-white', {
+                                    'bg-muted text-white': currentPath === (typeof item.href === 'string' ? item.href : item.href.url),
                                 })}
                             >
                                 <Link href={item.href} prefetch>
-                                    {item.icon && <item.icon className="h-4 w-4" />}
+                                    {item.icon && <item.icon className="h-4 w-4 text-gray-200" />}
                                     {item.title}
                                 </Link>
                             </Button>
