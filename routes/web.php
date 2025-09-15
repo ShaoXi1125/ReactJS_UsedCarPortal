@@ -26,7 +26,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
 Route::get('/cars', [CarController::class, 'index'])->name('cars.index');
-Route::get('/CarDetail',[CarController::class,'CarDetail'])->name('cars.detail');
+Route::get('/CarDetail/{carId}',[CarController::class,'CarDetail'])->name('cars.detail');
 
 
 require __DIR__.'/settings.php';

@@ -151,6 +151,7 @@ export default function CarSlider({
                   <div
                     key={car.id}
                     className="flex-1 border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-lg bg-white"
+                    onClick={() => (window.location.href = `/CarDetail/${car.id}`)}
                   >
                     {/* 图片 */}
                     {car.images && car.images.length > 0 ? (

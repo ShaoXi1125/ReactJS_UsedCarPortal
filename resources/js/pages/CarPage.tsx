@@ -88,6 +88,8 @@ export default function CarPage() {
     }
   };
 
+  
+
   // 过滤汽车数据
   const filteredCars = useMemo(() => {
     console.log("Current search filters:", searchFilters);
@@ -395,7 +397,7 @@ export default function CarPage() {
                     
                     {/* Action Buttons */}
                     <div className="flex gap-2">
-                      <button  className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
+                      <button  onClick={() => (window.location.href = `/CarDetail/${car.id}`)} className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
                         View Details
                       </button>
                       <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">

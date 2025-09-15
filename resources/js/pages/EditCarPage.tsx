@@ -17,6 +17,8 @@ interface Car {
   main_image_id?: number;
 }
 
+
+
 export default function EditCarPage() {
   const carId = window.location.pathname.split("/")[2];
   const [car, setCar] = useState<Car | null>(null);
@@ -28,6 +30,8 @@ export default function EditCarPage() {
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [selectedYear, setSelectedYear] = useState<string>("");
+
+  
 
 
   useEffect(() => {
@@ -154,18 +158,21 @@ export default function EditCarPage() {
             value={car.price}
             onChange={(e) => handleChange("price", parseFloat(e.target.value))}
             className="w-full p-3 border border-gray-300 rounded-lg text-black"
+            placeholder="Price"
           />
           <input
             type="text"
             value={car.color || ""}
             onChange={(e) => handleChange("color", e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg text-black"
+            placeholder="Color"
           />
           <textarea
             value={car.description || ""}
             onChange={(e) => handleChange("description", e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg text-black"
             rows={3}
+            placeholder="Description"
           />
 
           {/* Images */}

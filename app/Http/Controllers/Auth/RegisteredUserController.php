@@ -46,6 +46,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect()->intended(route('welcome', absolute: false));
+        return redirect()->route('login')->with('success', 'Account created successfully. Please login.');
     }
 }
