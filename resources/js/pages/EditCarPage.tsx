@@ -31,9 +31,6 @@ export default function EditCarPage() {
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [selectedYear, setSelectedYear] = useState<string>("");
 
-  
-
-
   useEffect(() => {
     if (!carId) return;
 
@@ -95,26 +92,24 @@ export default function EditCarPage() {
       if (car.main_image_id) {
         formData.append("main_image_id", car.main_image_id.toString());
       }
-      // Laravel 识别 PUT
       formData.append("_method", "PUT");
 
-      // 传递保留的旧图片 ID
       car.images.forEach((img) => {
         formData.append("existing_images[]", img.id.toString());
       });
 
-      // 新上传的图
+
       newImages.forEach((file) => {
         formData.append("images[]", file);
       });
 
-      // debug formData
+
       for (let [key, value] of formData.entries()) {
         console.log(key, value);
       }
 
       const res = await fetch(`http://127.0.0.1:8000/api/cars/${car.id}`, {
-        method: "POST", // ✅ 永远用 POST
+        method: "POST", 
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",

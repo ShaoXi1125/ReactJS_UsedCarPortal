@@ -11,6 +11,7 @@ import { Head } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import { useState } from "react";
 import axios from "axios";
+import FacebookLogin from '@/components/FacebookLogin';
 
 interface LoginProps {
   status?: string;
@@ -51,6 +52,10 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     } finally {
       setProcessing(false);
     }
+  };
+
+  const handleFacebookLogin = () => {
+    window.location.href = "http://127.0.0.1:8000/api/auth/facebook/redirect";
   };
 
   return (
@@ -126,8 +131,12 @@ export default function Login({ status, canResetPassword }: LoginProps) {
             {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
             Log in
           </Button>
+          
+         
+          
         </div>
-
+        </form>
+         <FacebookLogin />
         {/* Register link */}
         <div className="text-center text-sm text-gray-600">
           Don&apos;t have an account?{" "}
@@ -145,7 +154,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
             {errorMsg}
           </div>
         )}
-      </form>
+      
 
       {/* Status message */}
       {status && (

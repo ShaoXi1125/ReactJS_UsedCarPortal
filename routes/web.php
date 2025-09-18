@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\CarController;
 
+
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');

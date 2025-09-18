@@ -22,14 +22,13 @@ export default function MyCarPage() {
   const [cars, setCars] = useState<Car[]>([]);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/cars") // 取自己的车
+    fetch("http://127.0.0.1:8000/api/mycars")
       .then((res) => res.json())
       .then((data) => setCars(data))
       .catch((err) => console.error("Failed to fetch cars:", err));
   }, []);
 
   const handleEdit = (carId: number) => {
-    // 跳转到编辑页面
     window.location.href = `/cars/${carId}/edit`;
   };
 

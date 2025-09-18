@@ -88,16 +88,12 @@ export default function CarPage() {
     }
   };
 
-  
-
-  // 过滤汽车数据
   const filteredCars = useMemo(() => {
     console.log("Current search filters:", searchFilters);
     
     return cars.filter((car) => {
       const searchLower = searchFilters.searchText.toLowerCase();
-      
-      // 文本搜索
+
       if (searchFilters.searchText) {
         const makeName = car.variant?.model?.make?.name?.toLowerCase() || "";
         const modelName = car.variant?.model?.name?.toLowerCase() || "";
@@ -111,44 +107,38 @@ export default function CarPage() {
           return false;
         }
       }
-      
-      // 品牌过滤
+
       if (searchFilters.selectedMake) {
         const carMakeName = car.variant?.model?.make?.name;
         if (carMakeName !== searchFilters.selectedMake.title) {
           return false;
         }
       }
-      
-      // 型号过滤
+
       if (searchFilters.selectedModel) {
         const carModelName = car.variant?.model?.name;
         if (carModelName !== searchFilters.selectedModel.title) {
           return false;
         }
       }
-      
-      // 年份过滤 - 添加调试日志
+
       if (searchFilters.year !== null) {
         console.log(`Filtering by year: ${searchFilters.year} (type: ${typeof searchFilters.year})`);
         console.log(`Car year: ${car.year} (type: ${typeof car.year})`);
         console.log(`Match: ${car.year === searchFilters.year}`);
         
-        // 确保类型一致的比较
         if (Number(car.year) !== Number(searchFilters.year)) {
           console.log(`Car ${car.id} filtered out: year ${car.year} !== ${searchFilters.year}`);
           return false;
         }
       }
-      
-      // 最低价格过滤
+
       if (searchFilters.priceMin !== null) {
         if (car.price < searchFilters.priceMin) {
           return false;
         }
       }
-      
-      // 最高价格过滤
+
       if (searchFilters.priceMax !== null) {
         if (car.price > searchFilters.priceMax) {
           return false;
@@ -159,7 +149,6 @@ export default function CarPage() {
     });
   }, [cars, searchFilters]);
 
-  // 排序汽车数据
   const sortedCars = useMemo(() => {
     const sorted = [...filteredCars];
     
@@ -174,7 +163,7 @@ export default function CarPage() {
         return sorted.sort((a, b) => b.year - a.year);
       case "newest":
       default:
-        return sorted.sort((a, b) => b.id - a.id); // 假设ID越大越新
+        return sorted.sort((a, b) => b.id - a.id); 
     }
   }, [filteredCars, sortBy]);
 

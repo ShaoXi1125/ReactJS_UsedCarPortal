@@ -6,10 +6,43 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
+
+   public function facebookLogin(Request $request)
+    {
+        $accessToken = $request->input('access_token');
+
+        // 向 Facebook Graph API 请求用户信息
+        $fbResponse = Http::get("https://graph.facebook.com/me", [
+            'fields' => 'id,name,email',
+            'access_token' => $accessToken,
+        ]);
+
+        if ($fbResponse->failed()) {
+            return response()->json(['error' => 'Invalid Facebook token'], 401);
+        }
+
+        $fbUser = $fbResponse->json();
+
+        // 根据 email 查找或创建用户
+        $user = User::updateOrCreate(
+            ['email' => $fbUser['email'] ?? $fbUser['id'].'@facebook.com'],
+            ['name' => $fbUser['name']]
+        );
+
+        // 登录（如果你用 sanctum / passport，返回 token）
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Facebook login success',
+            'user' => $user,
+            'token' => $token
+        ]);
+    }
+    
     //
     public function register(Request $request)
     {
