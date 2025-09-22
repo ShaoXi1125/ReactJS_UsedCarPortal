@@ -3,6 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\CarController;
+use App\Http\Controllers\Auth\ProviderController;
+
+Route::get('/auth/github', [ProviderController::class, 'redirectToGithub'])->name('github.redirect');
+Route::get('/auth/github/callback', [ProviderController::class, 'handleGithubCallback'])->name('github.callback');
 
 
 Route::get('/', function () {

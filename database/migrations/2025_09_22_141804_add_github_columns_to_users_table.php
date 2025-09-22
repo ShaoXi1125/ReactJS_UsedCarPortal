@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
-            $table->string('facebook_id')->nullable()->after('email');
+            $table->string('github_id')->nullable()->unique()->after('id');
+            $table->string('github_token')->nullable()->after('github_id');
         });
     }
 
@@ -22,9 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            //
-             $table->dropColumn('facebook_id');
-        });
+         Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn(['github_id', 'github_token']);
+        }); 
     }
 };

@@ -11,7 +11,7 @@ import { Head } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import { useState } from "react";
 import axios from "axios";
-import FacebookLogin from '@/components/FacebookLogin';
+import GithubLogin from '@/components/GithubLogin';
 
 interface LoginProps {
   status?: string;
@@ -54,9 +54,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     }
   };
 
-  const handleFacebookLogin = () => {
-    window.location.href = "http://127.0.0.1:8000/api/auth/facebook/redirect";
-  };
+
 
   return (
     <AuthLayout
@@ -136,7 +134,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
           
         </div>
         </form>
-         <FacebookLogin />
+         <GithubLogin />
         {/* Register link */}
         <div className="text-center text-sm text-gray-600">
           Don&apos;t have an account?{" "}
