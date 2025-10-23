@@ -86,6 +86,12 @@ export default function Header() {
                                     >
                                         My Cars
                                     </Link>
+                                    <Link
+                                        href="/my-orders"
+                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                        >
+                                        My Orders
+                                        </Link>
                                         <Link
                                             href={profile.edit().url}
                                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

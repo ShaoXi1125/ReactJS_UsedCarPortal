@@ -380,7 +380,7 @@ export default function CarPage() {
                     </div>
 
                     <p className="text-indigo-600 font-bold text-xl mb-3">
-                      RM {car.price.toLocaleString()}
+                      RM {(Number(car.price)).toLocaleString('en-MY', { minimumFractionDigits: 2 })}
                     </p>
 
                     

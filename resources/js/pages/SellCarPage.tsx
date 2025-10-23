@@ -8,7 +8,13 @@
     const [color, setColor] = useState("");
     const [year, setYear] = useState("");
     const [mileage, setMileage] = useState("");
-    const [price, setPrice] = useState("");
+  // price holds the numeric string without commas (e.g. "123000")
+  const [price, setPrice] = useState("");
+  // Format numeric string like "123000" => "123,000"
+  const formatWithCommas = (numStr: string) => {
+    if (!numStr) return "";
+    return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
     const [description, setDescription] = useState("");
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
@@ -37,8 +43,18 @@
         return;
       }
 
-      const token = localStorage.getItem("token");
-      if (!token || token === "null") {
+      // Robust token retrieval: handle missing, empty, or stringified null/undefined
+      const getToken = () => {
+        if (typeof window === "undefined") return null;
+        const t = localStorage.getItem("token");
+        if (!t) return null;
+        const tn = t.trim();
+        if (tn === "" || tn.toLowerCase() === "null" || tn.toLowerCase() === "undefined") return null;
+        return tn;
+      };
+
+      const token = getToken();
+      if (!token) {
         setMessage("You must be logged in to submit the form.");
         return;
       }
@@ -122,10 +138,17 @@
               className="w-full p-3 border border-gray-300 rounded-lg text-black"
             />
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               placeholder="Price (RM)"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              value={formatWithCommas(price)}
+              onChange={(e) => {
+                // Allow digits and commas, strip non-digits when storing
+                const raw = e.target.value.replace(/,/g, '');
+                // Accept only digits
+                const numeric = raw.replace(/[^0-9]/g, '');
+                setPrice(numeric);
+              }}
               className="w-full p-3 border border-gray-300 rounded-lg text-black"
             />
             <textarea

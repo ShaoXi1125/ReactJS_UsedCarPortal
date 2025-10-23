@@ -24,6 +24,10 @@ class User extends Authenticatable
         'password',
         'github_id',
         'github_token',
+        'phone',
+        'address',
+        'avatar_url',
+        'role',
     ];
 
     /**
@@ -52,5 +56,10 @@ class User extends Authenticatable
 
     public function cars(){
         return $this->hasMany(Car::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
     }
 }

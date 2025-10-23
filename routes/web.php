@@ -26,6 +26,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/my-cars', [CarController::class, 'myCar'])->name('myCar');
     Route::get('/cars/{carId}/edit', [CarController::class, 'EditMyCar'])->name('EditCar');
+
+    Route::get('/my-orders', function () {
+        return Inertia::render('orders/OrderList');
+    })->name('orders.list');
+
+    // Expose orders SPA routes so client-side links like /orders and /orders/{id} work
+    Route::get('/orders', function () {
+        return Inertia::render('orders/OrderList');
+    })->name('orders.list.front');
+
+    Route::get('/orders/{id}', function () {
+        return Inertia::render('orders/OrderDetails');
+    })->name('orders.detail');
+
 });
 
 

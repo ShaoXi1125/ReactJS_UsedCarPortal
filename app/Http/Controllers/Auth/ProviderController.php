@@ -12,7 +12,9 @@ class ProviderController extends Controller
 {
     public function redirectToGithub()
     {
-        return Socialite::driver('github')->redirect();
+        return Socialite::driver('github')
+            ->with(['prompt' => 'select_account'])
+            ->redirect();
     }
 
     public function handleGithubCallback(Request $request)
@@ -20,20 +22,20 @@ class ProviderController extends Controller
         try {
             $githubUser = Socialite::driver('github')->user();
 
-            // 先尝试用 email 找用户（避免 Duplicate entry）
+         
             $user = User::where('email', $githubUser->getEmail())->first();
 
             if (!$user) {
-                // 如果没有用户，则创建新用户
+             
                 $user = User::create([
                     'github_id' => $githubUser->getId(),
                     'email' => $githubUser->getEmail() ?? $githubUser->getId().'@github.local',
                     'name' => $githubUser->getName() ?? $githubUser->getNickname(),
                     'github_token' => $githubUser->token,
-                    'password' => bcrypt(str()->random(24)), // 占位密码
+                    'password' => bcrypt(str()->random(24)),
                 ]);
             } else {
-                // 如果已有用户（用 email 登录过），更新 GitHub 信息
+                
                 $user->update([
                     'github_id' => $githubUser->getId(),
                     'github_token' => $githubUser->token,
@@ -41,7 +43,13 @@ class ProviderController extends Controller
             }
 
             Auth::login($user);
-
+            
+            // 生成新的API token
+            $token = $user->createToken('github-token')->plainTextToken;
+            
+            // 将token存储在session中
+            session(['auth_token' => $token]);
+            
             return redirect()->intended('/dashboard');
 
         } catch (\Laravel\Socialite\Two\InvalidStateException $e) {

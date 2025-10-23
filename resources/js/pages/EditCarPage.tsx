@@ -54,6 +54,16 @@ export default function EditCarPage() {
     setCar({ ...car, [field]: value });
   };
 
+  const formatWithCommas = (num: number | undefined | null) => {
+    if (num === undefined || num === null) return "";
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
+  const parseInputToNumber = (value: string) => {
+    const digits = value.replace(/,/g, '').replace(/[^0-9.]/g, '');
+    return digits ? parseFloat(digits) : 0;
+  };
+
   const handleImageDelete = (imageId: number) => {
     if (!car) return;
     setCar({ ...car, images: car.images.filter((img) => img.id !== imageId) });
@@ -149,9 +159,10 @@ export default function EditCarPage() {
                 onSelectVariant={setSelectedVariant}
             />
           <input
-            type="number"
-            value={car.price}
-            onChange={(e) => handleChange("price", parseFloat(e.target.value))}
+            type="text"
+            inputMode="numeric"
+            value={formatWithCommas(car.price)}
+            onChange={(e) => handleChange("price", parseInputToNumber(e.target.value))}
             className="w-full p-3 border border-gray-300 rounded-lg text-black"
             placeholder="Price"
           />

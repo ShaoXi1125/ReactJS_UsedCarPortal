@@ -1,8 +1,20 @@
 import React from "react";
 
 const LoginWithGithub: React.FC = () => {
+  React.useEffect(() => {
+    // 检查URL中是否有token参数
+    const searchParams = new URLSearchParams(window.location.search);
+    const token = searchParams.get('token');
+    
+    if (token) {
+      // 存储token
+      localStorage.setItem('auth_token', token);
+      // 清除URL参数
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   const handleGithubLogin = () => {
-    // 跳转到 Laravel 提供的 GitHub 登录入口
     window.location.href = "http://127.0.0.1:8000/auth/github";
   };
 

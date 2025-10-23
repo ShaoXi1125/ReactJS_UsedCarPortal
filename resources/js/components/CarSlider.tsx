@@ -179,7 +179,7 @@ export default function CarSlider({
                       <p className="text-sm text-gray-600">Color: {car.color}</p>
                     )}
                     <p className="text-indigo-600 font-bold text-lg mt-2">
-                      RM {car.price.toLocaleString()}
+                      RM {(Number(car.price)).toLocaleString('en-MY', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
                 ))}

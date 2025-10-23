@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Http;
 
 class AuthController extends Controller
 {
@@ -38,6 +39,50 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Facebook login success',
+            'user' => $user,
+            'token' => $token
+        ]);
+    }
+
+    // Simplified GitHub OAuth handling when frontend provides GitHub user data or access token
+    public function githubLogin(Request $request)
+    {
+        // Accept either access_token or raw user data
+        $githubUser = null;
+
+        if ($request->has('access_token')) {
+            $resp = Http::withHeaders(['Accept' => 'application/json'])
+                ->get('https://api.github.com/user', [
+                    'access_token' => $request->input('access_token'),
+                ]);
+
+            if ($resp->failed()) {
+                return response()->json(['error' => 'Invalid GitHub token'], 401);
+            }
+
+            $githubUser = $resp->json();
+        } else {
+            $githubUser = $request->input('github_user');
+        }
+
+        if (empty($githubUser) || empty($githubUser['id'])) {
+            return response()->json(['error' => 'GitHub user data required'], 422);
+        }
+
+        $user = User::firstOrCreate(
+            ['github_id' => $githubUser['id']],
+            [
+                'name' => $githubUser['name'] ?? $githubUser['login'] ?? 'GitHub User',
+                'email' => $githubUser['email'] ?? null,
+                'avatar_url' => $githubUser['avatar_url'] ?? null,
+                'role' => 'user',
+            ]
+        );
+
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'GitHub login success',
             'user' => $user,
             'token' => $token
         ]);
@@ -92,5 +137,22 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return response()->json($request->user());
+    }
+
+    // Update authenticated user profile
+    public function update(Request $request)
+    {
+        $user = $request->user();
+
+        $data = $request->only(['name', 'phone', 'address', 'avatar_url']);
+
+        $user->fill($data);
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'data' => $user->only(['id','name','phone','address','avatar_url']),
+        ]);
     }
 }

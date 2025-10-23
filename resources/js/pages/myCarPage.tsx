@@ -80,7 +80,7 @@ export default function MyCarPage() {
                 </h3>
                 <p className="text-sm">Variant: {car.variant.name}</p>
                 <p className="text-sm">Year: {car.year}</p>
-                <p className="text-sm font-bold">RM {car.price}</p>
+                <p className="text-sm font-bold">RM {(Number(car.price)).toLocaleString('en-MY', { minimumFractionDigits: 2 })}</p>
 
                 <div className="mt-3 flex gap-2">
                   <button

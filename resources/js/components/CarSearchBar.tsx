@@ -34,6 +34,16 @@ export default function CarSearchBar({
   const [year, setYear] = useState("");
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
+  // helpers to format/parse comma separated numbers
+  const formatWithCommas = (numStr: string) => {
+    if (!numStr) return "";
+    return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+  const parseNumber = (display: string) => {
+    if (!display) return null;
+    const digits = display.replace(/,/g, '').replace(/[^0-9]/g, '');
+    return digits ? parseInt(digits, 10) : null;
+  };
   const [isExpanded, setIsExpanded] = useState(false);
 
   // 获取 Makes
@@ -78,13 +88,13 @@ export default function CarSearchBar({
       (model) => model.value.toString() === selectedModel
     );
 
-    onSearch({
+  onSearch({
         searchText,
         selectedMake: selectedMakeObj || null,
         selectedModel: selectedModelObj || null,
         year: year ? parseInt(year, 10) : null,
-        priceMin: priceMin ? parseInt(priceMin, 10) : null,
-        priceMax: priceMax ? parseInt(priceMax, 10) : null,
+    priceMin: parseNumber(priceMin),
+    priceMax: parseNumber(priceMax),
     });
   }, [
     searchText,
@@ -225,10 +235,15 @@ export default function CarSearchBar({
                 Min Price (RM)
               </label>
               <input
-                type="number"
-                value={priceMin}
-                onChange={(e) => setPriceMin(e.target.value)}
-                placeholder="e.g. 20000"
+                type="text"
+                inputMode="numeric"
+                value={formatWithCommas(priceMin)}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/,/g, '');
+                  const numeric = raw.replace(/[^0-9]/g, '');
+                  setPriceMin(numeric);
+                }}
+                placeholder="e.g. 20,000"
                 className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 bg-white text-gray-900"
               />
             </div>
@@ -239,10 +254,15 @@ export default function CarSearchBar({
                 Max Price (RM)
               </label>
               <input
-                type="number"
-                value={priceMax}
-                onChange={(e) => setPriceMax(e.target.value)}
-                placeholder="e.g. 100000"
+                type="text"
+                inputMode="numeric"
+                value={formatWithCommas(priceMax)}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/,/g, '');
+                  const numeric = raw.replace(/[^0-9]/g, '');
+                  setPriceMax(numeric);
+                }}
+                placeholder="e.g. 100,000"
                 className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 bg-white text-gray-900"
               />
             </div>
