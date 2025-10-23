@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Car extends Model
 {
-    //
+    const STATUS_AVAILABLE = 'AVAILABLE';
+    const STATUS_RESERVED = 'RESERVED';
+    const STATUS_SOLD = 'SOLD';
+    
     protected $fillable = [
         'user_id',
         'make_id',
@@ -16,7 +19,8 @@ class Car extends Model
         'year',
         'mileage',
         'price',
-        'description'
+        'description',
+        'status'
     ];
     
 

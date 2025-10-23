@@ -15,6 +15,7 @@ interface Car {
   variant?: { id: number; name: string };
   images: { id: number; image_path: string }[];
   main_image_id?: number;
+  status?: 'AVAILABLE' | 'RESERVED' | 'SOLD';
 }
 
 interface User {
@@ -204,19 +205,30 @@ export default function CarDetailPage() {
                 </>
               ) : (
                 <>
-                  <button
-                    onClick={() => setShowTestDrive(true)}
-                    className="w-full py-3 bg-white border border-gray-300 text-black font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    Book Test Drive
-                  </button>
+                  {car.status === "AVAILABLE" ? (
+                    <>
+                      <button
+                        onClick={() => setShowTestDrive(true)}
+                        className="w-full py-3 border font-semibold rounded-lg bg-white border-gray-300 text-black hover:bg-gray-50 transition-colors"
+                      >
+                        Book Test Drive
+                      </button>
 
-                  <button
-                    onClick={() => setShowOrderConfirm(true)}
-                    className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
-                  >
-                    Order Now
-                  </button>
+                      <button
+                        onClick={() => setShowOrderConfirm(true)}
+                        className="w-full py-3 font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                      >
+                        Order Now
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      disabled
+                      className="w-full py-3 font-semibold rounded-lg bg-gray-400 text-white cursor-not-allowed"
+                    >
+                      Not Available
+                    </button>
+                  )}
                 </>
               )}
             </div>
@@ -227,7 +239,7 @@ export default function CarDetailPage() {
         {car.description && (
           <div className="mt-4 p-4 border rounded-lg bg-gray-50 text-gray-700">
             <h2 className="font-semibold mb-2">Description</h2>
-            <p>{car.description}</p>
+            <p className="whitespace-pre-wrap">{car.description}</p>
           </div>
         )}
       </main>
@@ -314,6 +326,19 @@ export default function CarDetailPage() {
                   }
                   try {
                     setBuyLoading(true);
+
+                    // Re-fetch car to ensure status hasn't changed
+                    const res = await fetch(`http://127.0.0.1:8000/api/cars/${car.id}`, {
+                      credentials: 'include',
+                    });
+                    if (!res.ok) throw new Error('Failed to re-check car status');
+                    const latestCar = await res.json();
+                    if (latestCar.status && latestCar.status !== 'AVAILABLE') {
+                      alert('Sorry, this car is no longer available.');
+                      setShowOrderConfirm(false);
+                      return;
+                    }
+
                     const payload = {
                       car_id: car.id,
                       total_price: car.price,

@@ -33,6 +33,7 @@ interface Car {
   id: number;
   user_id: number;
   variant_id: number;
+  status: 'AVAILABLE' | 'RESERVED' | 'SOLD';
   year: number;
   mileage: number;
   price: number;
@@ -386,11 +387,30 @@ export default function CarPage() {
                     
                     {/* Action Buttons */}
                     <div className="flex gap-2">
-                      <button  onClick={() => (window.location.href = `/CarDetail/${car.id}`)} className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
-                        View Details
+                      <button
+                        onClick={() => car.status === 'AVAILABLE' && (window.location.href = `/CarDetail/${car.id}`)}
+                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                          car.status !== 'AVAILABLE'
+                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                            : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                        }`}
+                        disabled={car.status !== 'AVAILABLE'}
+                      >
+                        {car.status === 'RESERVED' ? 'Reserved' :
+                         car.status === 'SOLD' ? 'Sold' :
+                         'View Details'}
                       </button>
-                      <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                        <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <button 
+                        className={`px-3 py-2 border border-gray-300 rounded-lg transition-colors ${
+                          car.status !== 'AVAILABLE'
+                            ? 'bg-gray-100 cursor-not-allowed'
+                            : 'hover:bg-gray-50'
+                        }`}
+                        disabled={car.status !== 'AVAILABLE'}
+                      >
+                        <svg className={`h-5 w-5 ${
+                          car.status !== 'AVAILABLE' ? 'text-gray-400' : 'text-gray-600'
+                        }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                         </svg>
                       </button>

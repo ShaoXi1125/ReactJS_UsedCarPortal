@@ -51,14 +51,28 @@ class OrderController extends Controller
             ];
         }
 
-        $order = Order::create([
-            'user_id' => $request->user()->id,
-            'car_id' => $car->id,
-            'seller_id' => $car->user_id,
-            'order_items' => $orderItems,
-            'total_price' => $request->total_price,
-            'status' => 'Pending',
-        ]);
+        // 检查车辆是否已被预订
+        if ($car->status !== Car::STATUS_AVAILABLE) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This car is no longer available.',
+            ], 400);
+        }
+
+        \DB::transaction(function () use ($request, $car, $orderItems, &$order) {
+            // 创建订单
+            $order = Order::create([
+                'user_id' => $request->user()->id,
+                'car_id' => $car->id,
+                'seller_id' => $car->user_id,
+                'order_items' => $orderItems,
+                'total_price' => $request->total_price,
+                'status' => 'Pending',
+            ]);
+
+            // 更新汽车状态为已预订
+            $car->update(['status' => Car::STATUS_RESERVED]);
+        });
 
         return response()->json([
             'success' => true,
@@ -92,11 +106,27 @@ class OrderController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        // Only allow cancelling if pending, etc. Simple rules here.
-        $order->status = $request->status;
-        $order->save();
+        \DB::transaction(function () use ($request, $order) {
+            $oldStatus = $order->status;
+            $newStatus = $request->status;
+            
+            // 更新订单状态
+            $order->status = $newStatus;
+            $order->save();
 
-        return response()->json(['success' => true, 'message' => "Order status updated to {$order->status}."]); 
+            // 根据订单状态更新汽车状态
+            $car = $order->car;
+            
+            if ($newStatus === 'Cancelled' && $oldStatus === 'Pending') {
+                // 如果订单从Pending变为Cancelled，将车辆状态改回Available
+                $car->update(['status' => Car::STATUS_AVAILABLE]);
+            } elseif ($newStatus === 'Completed') {
+                // 如果订单完成，将车辆状态改为Sold
+                $car->update(['status' => Car::STATUS_SOLD]);
+            }
+        });
+
+        return response()->json(['success' => true, 'message' => "Order status updated to {$request->status}."]);
     }
 
     // Delete order (only if pending)
