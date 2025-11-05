@@ -32,8 +32,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{order}', [OrderController::class, 'show']);
     Route::get('/owner-orders', [OrderController::class, 'ownerOrders']);
+    Route::get('/owner-orders/{order}', [OrderController::class, 'showOwnerOrder']);
     // Payment simulation: POST /orders/{order}/pay
     Route::post('/orders/{order}/pay', [OrderController::class, 'pay']);
     Route::put('/orders/{order}', [OrderController::class, 'update']);
     Route::delete('/orders/{order}', [OrderController::class, 'destroy']);
+    Route::put('/orders/{order}/complete', [OrderController::class, 'complete']);
 });

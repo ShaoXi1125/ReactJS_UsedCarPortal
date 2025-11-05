@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { getOrders } from "@/services/orders";
 import AppLayout from "@/layouts/app-layout";
 
 export default function DashboardOrders() {
@@ -49,7 +48,8 @@ export default function DashboardOrders() {
     }
   };
 
-  const renderOrderTable = (orders: any[]) => (
+  // ✅ 改动重点：传入 activeTab，动态决定 link
+  const renderOrderTable = (orders: any[], type: "buyer" | "owner") => (
     <div className="overflow-x-auto bg-white shadow-sm border border-gray-200 rounded-xl mt-4">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-100">
@@ -88,8 +88,13 @@ export default function DashboardOrders() {
                 </span>
               </td>
               <td className="px-6 py-4 space-x-3">
+                {/* ✅ 核心修正：根据 tab 类型动态切换链接 */}
                 <a
-                  href={`/orders/${o.id}`}
+                  href={
+                    type === "owner"
+                      ? `/owner-orders/${o.id}`
+                      : `/orders/${o.id}`
+                  }
                   className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
                 >
                   View
@@ -139,12 +144,12 @@ export default function DashboardOrders() {
           </div>
         ) : activeTab === "buyer" ? (
           buyerOrders.length ? (
-            renderOrderTable(buyerOrders)
+            renderOrderTable(buyerOrders, "buyer")
           ) : (
             <p className="text-gray-600 text-center py-10">No buyer orders yet.</p>
           )
         ) : ownerOrders.length ? (
-          renderOrderTable(ownerOrders)
+          renderOrderTable(ownerOrders, "owner")
         ) : (
           <p className="text-gray-600 text-center py-10">No owner orders yet.</p>
         )}
@@ -152,5 +157,3 @@ export default function DashboardOrders() {
     </AppLayout>
   );
 }
-
-

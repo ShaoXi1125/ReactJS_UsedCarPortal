@@ -40,6 +40,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('orders/OrderDetails');
     })->name('orders.detail');
 
+    Route::get('/owner-orders/{id}', function () {
+        return Inertia::render('orders/OrderDetails');
+    })->name('orders.detail');
+
 });
 
 

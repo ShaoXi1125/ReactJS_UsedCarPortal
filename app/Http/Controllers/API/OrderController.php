@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Car;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -120,9 +121,6 @@ class OrderController extends Controller
             if ($newStatus === 'Cancelled' && $oldStatus === 'Pending') {
                 // 如果订单从Pending变为Cancelled，将车辆状态改回Available
                 $car->update(['status' => Car::STATUS_AVAILABLE]);
-            } elseif ($newStatus === 'Completed') {
-                // 如果订单完成，将车辆状态改为Sold
-                $car->update(['status' => Car::STATUS_SOLD]);
             }
         });
 
@@ -155,7 +153,86 @@ class OrderController extends Controller
             })
             ->with(['car.make', 'car.model', 'car.variant', 'car.images', 'user']) // user = buyer info
             ->get();
-
+           
         return response()->json($orders);
     }
+
+    public function showOwnerOrder(Request $request, Order $order)
+    {
+        $user = $request->user();
+
+        // ✅ 验证该订单是否属于当前登录用户的车
+        if ($order->car->user_id !== $user->id) {
+            return response()->json(['message' => 'Not authorized to view this order.'], 403);
+        }
+
+        // ✅ 返回详细信息，包含买家资料
+        return response()->json(
+            $order->load(['car.make', 'car.model', 'car.variant', 'car.images', 'user'])
+        );
+    }
+
+    // 支付订单
+    public function pay(Request $request, Order $order)
+     {
+        // 1️⃣ 验证订单属于当前登录用户
+        if ($order->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Not authorized to pay for this order.'], 403);
+        }
+
+        // 2️⃣ 检查订单状态，防止重复支付
+        if (in_array($order->status, ['Completed', 'Cancelled'])) {
+            return response()->json([
+                'message' => 'This order has already been processed or cancelled.'
+            ], 400);
+        }
+
+        // 3️⃣ 模拟支付（前端传入 simulateResult）
+        $result = $request->input('result'); // 可为 success 或 fail
+        if ($result === 'fail') {
+            return response()->json(['message' => 'Simulated payment failure.'], 400);
+        }
+
+        // 4️⃣ 模拟计算押金金额（例如总价的 10%）
+        $deposit = round($order->total_price * 0.1, 2);
+
+        // 5️⃣ 数据库事务：更新订单和车辆状态
+        \DB::transaction(function () use ($order) {
+            $order->update(['status' => 'Confirmed']);
+            $order->car->update(['status' => \App\Models\Car::STATUS_RESERVED]);
+        });
+
+        // 6️⃣ 返回成功响应
+        return response()->json([
+            'message' => 'Payment successful',
+            'deposit' => $deposit,
+            'order_id' => $order->id,
+            'status' => 'Confirmed'
+        ]);
+    }
+
+    public function complete(Request $request, Order $order)
+    {
+        // 1️⃣ 验证：是否为车主本人
+        if ($order->car->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Not authorized'], 403);
+        }
+
+        // 2️⃣ 只能在已确认状态（Confirmed）后完成
+        if ($order->status !== 'Confirmed') {
+            return response()->json(['message' => 'Order must be confirmed before completing.'], 400);
+        }
+
+        // 3️⃣ 更新状态
+        \DB::transaction(function () use ($order) {
+            $order->update(['status' => 'Completed']);
+            $order->car->update(['status' => \App\Models\Car::STATUS_SOLD]);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order marked as completed and car set to Sold.'
+        ]);
+    }
+
 }
